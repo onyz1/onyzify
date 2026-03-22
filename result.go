@@ -1,0 +1,40 @@
+package onyzify
+
+import (
+	"fmt"
+
+	"github.com/onyz1/onyzify/internal/yaml"
+)
+
+// Result represents the output of the onyzify engine after processing the
+// command-line inputs and schema.
+type Result struct {
+	inputs map[string]any
+}
+
+// String returns a string representation of the Result, which includes the parsed inputs in a readable format.
+func (r *Result) String() string {
+	return fmt.Sprintf("%v", r.inputs)
+}
+
+// YAML converts the map representation of the parsed command-line inputs
+// into a YAML-formatted byte slice. If there is an error during the conversion process,
+// it returns an error with a descriptive message.
+func (r *Result) YAML() ([]byte, error) {
+	data, err := yaml.Save(r.inputs)
+	if err != nil {
+		return nil, fmt.Errorf("convert to YAML: %w", err)
+	}
+
+	return data, nil
+}
+
+// SaveYAML saves the YAML representation of the parsed command-line inputs to a file at the specified path.
+// If there is an error during the file saving process, it returns an error with a descriptive message.
+func (r *Result) SaveYAML(path string) error {
+	if err := yaml.SaveFile(path, r.inputs); err != nil {
+		return fmt.Errorf("save YAML file: %w", err)
+	}
+	return nil
+
+}

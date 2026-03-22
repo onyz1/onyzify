@@ -1,0 +1,20 @@
+students:
+  type: "[]string"
+  required: true
+  description: "A list of student names."
+
+ages:
+  type: "[]int"
+  required: true
+  description: "A list of student ages."
+
+isComputerScienceMajor:
+  type: "[]bool"
+  required: true
+  description: "A list indicating whether each student is a computer science major."
+
+teacherName:
+  type: "string"
+  required: false
+  default: "Dr. Smith"
+  description: "The name of the teacher."

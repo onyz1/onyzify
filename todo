@@ -1,0 +1,16 @@
+- Add support for Type: list for default and enum values.
+- Add more types such as timestamps and other things YAML supports.
+- Add support for different configuration schemas such as JSON, TOML etc.
+- Add support for custom validation rules.
+- Add support for object values e.g.:
+```yaml
+user:
+  type: object
+  fields:
+    name:
+      type: string
+    age:
+      type: int
+```
+
+- Add support for only verifying a configuration file with the schema rules, right now we only support building a configuration file from the schema.
