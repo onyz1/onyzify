@@ -43,12 +43,12 @@ func (e *Engine) Run(parent context.Context) (*Result, error) {
 
 	var inputs map[string]any
 	if !e.opts.Wizard {
-		fs, flagInputs, err := cli.Build(ctx, e.opts.FlagSet, compiledSch)
+		fs, flagInputs, err := cli.Build(e.opts.FlagSet, compiledSch)
 		if err != nil {
 			return nil, fmt.Errorf("build CLI: %w", err)
 		}
 
-		if err := cli.Parse(ctx, compiledSch, flagInputs, formatter.UsageFormatter, fs, e.opts.Args); err != nil {
+		if err := cli.Parse(compiledSch, flagInputs, formatter.UsageFormatter, fs, e.opts.Args); err != nil {
 			return nil, fmt.Errorf("parse CLI: %w", err)
 		}
 		inputs = flagInputs.ToAnyMap()
