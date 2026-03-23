@@ -1,110 +1,118 @@
 package types
 
-import "fmt"
-
-// Type represents the basic data types.
-type Type uint8
-
-// Predefined types.
-const (
-	TypeInvalid Type = iota
-
-	TypeInt
-	TypeIntList
-	TypeInt64
-	TypeInt64List
-
-	TypeUint
-	TypeUintList
-	TypeUint64
-	TypeUint64List
-
-	TypeString
-	TypeStringList
-	TypeByte
-	// TypeByteList is a special type that represents a list of bytes,
-	// typically used for binary data it corresponds to [[]byte].
-	TypeByteList
-
-	TypeBool
-	TypeBoolList
-
-	TypeFloat64
-	TypeFloat64List
+import (
+	"fmt"
+	"strings"
 )
 
-// typeFromString maps string representations of types to their corresponding Type values.
-var typeFromString = map[string]Type{
-	"int":     TypeInt,
-	"[]int":   TypeIntList,
-	"int64":   TypeInt64,
-	"[]int64": TypeInt64List,
+// TypeKind represents the specific kind of a type, such as int, string, bool, etc.
+// It is used to identify the underlying data type of a Value.
+type TypeKind uint8
 
-	"uint":     TypeUint,
-	"[]uint":   TypeUintList,
-	"uint64":   TypeUint64,
-	"[]uint64": TypeUint64List,
+// Constants for the different TypeKind values, representing various data types.
+const (
+	TypeInvalid TypeKind = iota
 
-	"string":          TypeString,
-	"[]string":        TypeStringList,
-	"byte":            TypeByte,
-	"[]byte (binary)": TypeByteList,
+	TypeInt
+	TypeInt64
 
-	"bool":   TypeBool,
-	"[]bool": TypeBoolList,
+	TypeUint
+	TypeUint64
 
-	"float64":   TypeFloat64,
-	"[]float64": TypeFloat64List,
+	TypeString
+	TypeByte
+
+	TypeBool
+
+	TypeFloat64
+
+	TypeList
+)
+
+// Type represents the type of a value. For list types, Elem holds the element type.
+type Type struct {
+	Kind TypeKind
+	Elem *Type // For list types, Elem holds the type of the list elements.
 }
 
-// stringFromType maps Type values to their corresponding string representations.
-var stringFromType = map[Type]string{
-	TypeInt:       "int",
-	TypeIntList:   "[]int",
-	TypeInt64:     "int64",
-	TypeInt64List: "[]int64",
+var typeKindToString = map[TypeKind]string{
+	TypeInvalid: "invalid",
 
-	TypeUint:       "uint",
-	TypeUintList:   "[]uint",
-	TypeUint64:     "uint64",
-	TypeUint64List: "[]uint64",
+	TypeInt:   "int",
+	TypeInt64: "int64",
 
-	TypeString:     "string",
-	TypeStringList: "[]string",
-	TypeByte:       "byte",
-	TypeByteList:   "[]byte (binary)",
+	TypeUint:   "uint",
+	TypeUint64: "uint64",
 
-	TypeBool:     "bool",
-	TypeBoolList: "[]bool",
+	TypeString: "string",
+	TypeByte:   "byte",
 
-	TypeFloat64:     "float64",
-	TypeFloat64List: "[]float64",
+	TypeBool: "bool",
+
+	TypeFloat64: "float64",
+
+	// We don't include TypeList here because list types are represented with the "[]" prefix in their string representation.
 }
 
-// ParseType converts a string representation of a type to its corresponding Type value.
-func ParseType(typeStr string) (Type, error) {
-	if t, ok := typeFromString[typeStr]; ok {
-		return t, nil
+// String returns a string representation of the Type. For basic types, it returns the
+// type name (e.g., "int", "string"). For list types, it returns a string in the format
+// "[]<elemType>", where <elemType> is the string representation of the element type.
+// If the type kind is unknown, it returns "unknown".
+func (t *Type) String() string {
+	var sb strings.Builder
+
+	if t.Kind == TypeList {
+		sb.WriteString("[]")
+		if t.Elem != nil {
+			sb.WriteString(t.Elem.String())
+		} else {
+			sb.WriteString("unknown")
+		}
+	} else {
+		if s, ok := typeKindToString[t.Kind]; ok {
+			sb.WriteString(s)
+		} else {
+			sb.WriteString("unknown")
+		}
 	}
-	return TypeInvalid, fmt.Errorf("unknown type: %q", typeStr)
+
+	return sb.String()
 }
 
-// IsListType checks if the given Type is a list type (e.g., []int, []string, etc.).
-func IsListType(t Type) bool {
-	return t == TypeIntList ||
-		t == TypeInt64List ||
-		t == TypeUintList ||
-		t == TypeUint64List ||
-		t == TypeStringList ||
-		t == TypeByteList ||
-		t == TypeBoolList ||
-		t == TypeFloat64List
+var stringToTypeKind = map[string]TypeKind{
+	"invalid": TypeInvalid,
+
+	"int":   TypeInt,
+	"int64": TypeInt64,
+
+	"uint":   TypeUint,
+	"uint64": TypeUint64,
+
+	"string": TypeString,
+	"byte":   TypeByte,
+
+	"bool": TypeBool,
+
+	"float64": TypeFloat64,
+
+	// We don't include "list" here because list types are parsed with the "[]" prefix in ParseType.
 }
 
-// String returns the string representation of the Type.
-func (t Type) String() string {
-	if s, ok := stringFromType[t]; ok {
-		return s
+// ParseType takes a string representation of a type and converts it into a Type struct.
+// It supports basic types as well as list types (e.g., "[]int", "[]string", etc.) and nested types (e.g., "[][]int").
+// If the input string does not correspond to a known type, it returns an error.
+func ParseType(s string) (*Type, error) {
+	if after, ok := strings.CutPrefix(s, "[]"); ok {
+		elemType, err := ParseType(after)
+		if err != nil {
+			return nil, fmt.Errorf("parse list type %q: %w", s, err)
+		}
+		return &Type{Kind: TypeList, Elem: elemType}, nil
 	}
-	return "invalid"
+
+	if tk, ok := stringToTypeKind[s]; ok {
+		return &Type{Kind: tk}, nil
+	}
+
+	return nil, fmt.Errorf("type: %q: %w", s, ErrUnknownType)
 }

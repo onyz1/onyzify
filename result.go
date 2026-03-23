@@ -6,13 +6,14 @@ import (
 	"github.com/onyz1/onyzify/internal/yaml"
 )
 
-// Result represents the output of the onyzify engine after processing the
-// command-line inputs and schema.
+// Result represents the output of the onyzify engine after processing the inputs and schema.
 type Result struct {
 	inputs map[string]any
 }
 
-// String returns a string representation of the Result, which includes the parsed inputs in a readable format.
+// String returns a string representation of the parsed inputs in Result.
+// YAML converts the parsed inputs into YAML-formatted bytes.
+// SaveYAML saves the parsed inputs as YAML to the specified file.
 func (r *Result) String() string {
 	return fmt.Sprintf("%v", r.inputs)
 }

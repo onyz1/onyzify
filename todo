@@ -14,3 +14,4 @@ user:
 ```
 
 - Add support for only verifying a configuration file with the schema rules, right now we only support building a configuration file from the schema.
+- Add support for a `mustInclude` field in each field.

@@ -7,7 +7,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-// YAMLOutput is a type alias for any, representing the output of YAML operations.
+// YAMLOutput is the output target type accepted by the YAML helpers.
 type YAMLOutput any
 
 // Load parses the YAML data and populates the provided output structure with the corresponding values.

@@ -22,7 +22,7 @@ func main() {
 	opts := &onyzify.Options{
 		Logger: logger,
 		Args:   os.Args[1:],
-		Wizard: true,
+		// Wizard: true,
 		WizardOptions: onyzify.WizardOptions{
 			Dst: os.Stdout,
 			Src: os.Stdin,

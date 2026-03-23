@@ -6,6 +6,7 @@ import (
 
 	"github.com/onyz1/infonyz"
 	"github.com/onyz1/onyzify/internal/cli"
+	"github.com/onyz1/onyzify/internal/formatter"
 	"github.com/onyz1/onyzify/internal/wizard"
 )
 
@@ -47,14 +48,14 @@ func (e *Engine) Run(parent context.Context) (*Result, error) {
 			return nil, fmt.Errorf("build CLI: %w", err)
 		}
 
-		if err := cli.Parse(ctx, fs, flagInputs, compiledSch, e.opts.Args); err != nil {
+		if err := cli.Parse(ctx, compiledSch, flagInputs, formatter.UsageFormatter, fs, e.opts.Args); err != nil {
 			return nil, fmt.Errorf("parse CLI: %w", err)
 		}
 		inputs = flagInputs.ToAnyMap()
 	} else {
 		wizInputs, err := wizard.Run(
 			compiledSch,
-			wizard.DefaultFormatter,
+			formatter.StructuredFormatter,
 			e.opts.WizardOptions.Dst,
 			e.opts.WizardOptions.Src,
 		)

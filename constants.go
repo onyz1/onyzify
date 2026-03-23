@@ -38,9 +38,8 @@ type Options struct {
 	Logger infonyz.Logger
 }
 
-// Validate checks the validity of the Options instance by ensuring that required fields are not nil.
-// It returns an error if any required field is missing or invalid.
-// Otherwise, it returns nil, indicating that the options are valid.
+// Validate checks that [Options.SchemaData] is set, [Options.Args] is provided in CLI mode,
+// and [Options.WizardOptions.Dst]/[Options.WizardOptions.Src] are provided in wizard mode.
 func (o *Options) Validate() error {
 	if o.SchemaData == nil {
 		return ErrNilSchemaData

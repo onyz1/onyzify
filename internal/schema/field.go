@@ -70,11 +70,12 @@ func (f *Field) Compile(ctx context.Context) (*CompiledField, error) {
 
 	var err error
 
-	compiled.Type, err = types.ParseType(f.Type)
+	parsedType, err := types.ParseType(f.Type)
 	if err != nil {
 		return nil, fmt.Errorf("parse type: %w", err)
 	}
 
+	compiled.Type = *parsedType
 	compiled.Required = f.Required
 	compiled.Description = f.Description
 
