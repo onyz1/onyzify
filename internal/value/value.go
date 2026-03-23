@@ -1,6 +1,7 @@
 package value
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -222,13 +223,104 @@ func (v *Value) IsZero() bool {
 	}
 }
 
+// UnmarshalJSON implements the [json.Unmarshaler] interface for the [Value] struct.
+// It takes a JSON byte slice as input and attempts to unmarshal it into the [Value] struct based on the [Value.Type].
+//
+// The function first unmarshals the JSON into an empty interface (any) to determine the raw data type,
+// and then it uses a switch statement to handle different Type kinds, assigning the appropriate field in the [Value] struct.
+// If the JSON data does not match the expected type for the [Value], it returns an error indicating the mismatch.
+func (v *Value) UnmarshalJSON(data []byte) error {
+	var raw any
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return fmt.Errorf("unmarshal json: %w", err)
+	}
+
+	switch v.Type.Kind {
+	case types.TypeInt:
+		if num, ok := raw.(float64); ok {
+			v.Int = int(num)
+			return nil
+		}
+		return fmt.Errorf("expected int, got %T", raw)
+
+	case types.TypeInt64:
+		if num, ok := raw.(float64); ok {
+			v.Int64 = int64(num)
+			return nil
+		}
+		return fmt.Errorf("expected int64, got %T", raw)
+
+	case types.TypeUint:
+		if num, ok := raw.(float64); ok {
+			v.Uint = uint(num)
+			return nil
+		}
+		return fmt.Errorf("expected uint, got %T", raw)
+
+	case types.TypeUint64:
+		if num, ok := raw.(float64); ok {
+			v.Uint64 = uint64(num)
+			return nil
+		}
+		return fmt.Errorf("expected uint64, got %T", raw)
+
+	case types.TypeString:
+		if str, ok := raw.(string); ok {
+			v.String = str
+			return nil
+		}
+		return fmt.Errorf("expected string, got %T", raw)
+
+	case types.TypeByte:
+		if num, ok := raw.(float64); ok {
+			v.Byte = byte(num)
+			return nil
+		}
+		return fmt.Errorf("expected byte, got %T", raw)
+
+	case types.TypeBool:
+		if b, ok := raw.(bool); ok {
+			v.Bool = b
+			return nil
+		}
+		return fmt.Errorf("expected bool, got %T", raw)
+
+	case types.TypeFloat64:
+		if num, ok := raw.(float64); ok {
+			v.Float64 = num
+			return nil
+		}
+		return fmt.Errorf("expected float64, got %T", raw)
+
+	case types.TypeList:
+		if arr, ok := raw.([]any); ok {
+			for _, item := range arr {
+				elemValue := &Value{Type: *v.Type.Elem}
+				itemData, err := json.Marshal(item)
+				if err != nil {
+					return fmt.Errorf("marshal list item: %w", err)
+				}
+				if err := elemValue.UnmarshalJSON(itemData); err != nil {
+					return fmt.Errorf("unmarshal list item: %w", err)
+				}
+				v.List = append(v.List, elemValue)
+			}
+			return nil
+		}
+		return fmt.Errorf("expected list, got %T", raw)
+
+	default:
+		return fmt.Errorf("unsupported type: %s", v.Type.String())
+	}
+}
+
 // ParseValue takes a [types.Type] and an input string,
 // attempts to parse the input according to the specified [types.Type],
 // and returns a Value containing the parsed data or an error if parsing fails
 // or if the [types.Type] is unsupported.
 //
-// Note: For list types, the input string is expected to be a comma-separated list of values,
-// and the function will parse each item in the list according to the type passed.
+// For list types, it expects the input to be a JSON array string (e.g., "[1, 2, 3]")
+// and parses each element according to the element type defined in the [types.Type].
 func ParseValue(t types.Type, input string) (*Value, error) {
 	var v = new(Value)
 	v.Type = t
@@ -298,17 +390,19 @@ func ParseValue(t types.Type, input string) (*Value, error) {
 			return nil, ErrMustHaveElemType
 		}
 
-		normalizedInput := strings.ReplaceAll(input, " ", "")
+		var raw []json.RawMessage
+		if err := json.Unmarshal([]byte(input), &raw); err != nil {
+			return nil, fmt.Errorf("unmarshal list: %w", err)
+		}
 
-		// For list types, we expect the input to be a comma-separated list of values.
-		items := strings.Split(normalizedInput, ",")
+		for _, item := range raw {
+			elemValue := &Value{Type: *v.Type.Elem}
 
-		for _, item := range items {
-			parsedItem, err := ParseValue(*v.Type.Elem, item)
-			if err != nil {
-				return nil, fmt.Errorf("parse list item %q: %w", item, err)
+			if err := elemValue.UnmarshalJSON(item); err != nil {
+				return nil, fmt.Errorf("unmarshal list item: %w", err)
 			}
-			v.List = append(v.List, parsedItem)
+
+			v.List = append(v.List, elemValue)
 		}
 
 	default:
