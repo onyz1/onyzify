@@ -51,7 +51,7 @@ var typeKindToString = map[TypeKind]string{
 
 	TypeFloat64: "float64",
 
-	// We don't include TypeList here because list types are represented with the "[]" prefix in their string representation.
+	TypeList: "list",
 }
 
 // String returns a string representation of the Type. For basic types, it returns the
@@ -62,12 +62,15 @@ func (t *Type) String() string {
 	var sb strings.Builder
 
 	if t.Kind == TypeList {
-		sb.WriteString("[]")
+		sb.WriteString(typeKindToString[TypeList])
+		sb.WriteString("[")
 		if t.Elem != nil {
 			sb.WriteString(t.Elem.String())
 		} else {
 			sb.WriteString("unknown")
 		}
+		sb.WriteString("]")
+
 	} else {
 		if s, ok := typeKindToString[t.Kind]; ok {
 			sb.WriteString(s)
@@ -95,17 +98,20 @@ var stringToTypeKind = map[string]TypeKind{
 
 	"float64": TypeFloat64,
 
-	// We don't include "list" here because list types are parsed with the "[]" prefix in ParseType.
+	"list": TypeList,
 }
 
 // ParseType takes a string representation of a type and converts it into a Type struct.
 // It supports basic types as well as list types (e.g., "[]int", "[]string", etc.) and nested types (e.g., "[][]int").
 // If the input string does not correspond to a known type, it returns an error.
 func ParseType(s string) (*Type, error) {
-	if after, ok := strings.CutPrefix(s, "[]"); ok {
-		elemType, err := ParseType(after)
+	s = strings.TrimSpace(s)
+
+	if strings.HasPrefix(s, "list[") && strings.HasSuffix(s, "]") {
+		elemTypeStr := strings.TrimSuffix(strings.TrimPrefix(s, "list["), "]")
+		elemType, err := ParseType(elemTypeStr)
 		if err != nil {
-			return nil, fmt.Errorf("parse list type %q: %w", s, err)
+			return nil, fmt.Errorf("type: %q: %w", s, err)
 		}
 		return &Type{Kind: TypeList, Elem: elemType}, nil
 	}
