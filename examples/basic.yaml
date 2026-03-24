@@ -1,20 +1,17 @@
 students:
-  type: "[]string"
+  type: "list[string]"
   required: true
+  default: {Alice, Bob, Charlie}
   description: "A list of student names."
 
-# ages:
-#   type: "[]int"
-#   required: true
-#   description: "A list of student ages."
-
-# isComputerScienceMajor:
-#   type: "[]bool"
-#   required: true
-#   description: "A list indicating whether each student is a computer science major."
-
-# teacherName:
+# student:
 #   type: "string"
+#   required: true
+#   default: "Alice"
+#   description: "A single student name." 
+
+# ages:
+#   type: "list[int]"
 #   required: false
-#   default: "Dr. Smith"
-#   description: "The name of the teacher."
+#   enum: [[18, 19, 20, 21], [13, 14, 15, 16]]
+#   description: "The ages of the students"
