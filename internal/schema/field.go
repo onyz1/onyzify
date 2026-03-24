@@ -2,12 +2,14 @@ package schema
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"slices"
 
 	"github.com/onyz1/infonyz"
 	"github.com/onyz1/onyzify/internal/types"
 	"github.com/onyz1/onyzify/internal/value"
+	"gopkg.in/yaml.v3"
 )
 
 // Field represents the structure of a field as defined in the schema configuration.
@@ -29,6 +31,71 @@ type Field struct {
 	// Enum contains a list of allowed values for the field, if specified,
 	// as strings that will be parsed into [value.Value] instances based on the field's type during compilation.
 	Enum []string `yaml:"enum,omitempty"`
+}
+
+// UnmarshalYAML implements the [yaml.Unmarshaler] interface for the Field struct.
+// It allows the [Field] struct to be properly populated when unmarshaling YAML data.
+//
+// The method handles the decoding of the YAML node into the Field struct's properties,
+// including special handling for the [Field.Default] and [Field.Enum] fields to ensure they are stored as strings.
+func (f *Field) UnmarshalYAML(value *yaml.Node) error {
+	// temporary struct to decode the YAML data into, allowing us to handle the Default and Enum fields as any type
+	type anyField struct {
+		Name        string `yaml:"-"`
+		Type        string `yaml:"type"`
+		Required    bool   `yaml:"required,omitempty"`
+		Description string `yaml:"description,omitempty"`
+		Default     any    `yaml:"default,omitempty"`
+		Enum        []any  `yaml:"enum,omitempty"`
+	}
+
+	var alias anyField
+	if err := value.Decode(&alias); err != nil {
+		return fmt.Errorf("decode field: %w", err)
+	}
+
+	f.Name = alias.Name
+	f.Type = alias.Type
+	f.Required = alias.Required
+	f.Description = alias.Description
+
+	if alias.Default != nil {
+		switch v := alias.Default.(type) {
+		case string:
+			f.Default = v
+
+		case []any:
+			out, err := json.Marshal(v)
+			if err != nil {
+				return fmt.Errorf("marshal default value: %w", err)
+			}
+			f.Default = string(out)
+
+		default:
+			return fmt.Errorf("type: %T: %w", alias.Default, ErrUnsupportedDefaultType)
+		}
+	}
+
+	if len(alias.Enum) > 0 {
+		for _, item := range alias.Enum {
+			switch v := item.(type) {
+			case string:
+				f.Enum = append(f.Enum, v)
+
+			case []any:
+				out, err := json.Marshal(v)
+				if err != nil {
+					return fmt.Errorf("marshal enum value: %w", err)
+				}
+				f.Enum = append(f.Enum, string(out))
+
+			default:
+				return fmt.Errorf("type: %T: %w", item, ErrUnsupportedEnumType)
+			}
+		}
+	}
+
+	return nil
 }
 
 // Compile processes the Field's configuration,

@@ -13,4 +13,8 @@ var (
 	ErrValueRequired = errors.New("value is required")
 	// ErrValueNotInEnum is returned when a provided value is not in the enum values.
 	ErrValueNotInEnum = errors.New("value is not in enum values")
+	// ErrUnsupportedDefaultType is returned when a default value is provided with an unsupported type.
+	ErrUnsupportedDefaultType = errors.New("unsupported default value type")
+	// ErrUnsupportedEnumType is returned when an enum value is provided with an unsupported type.
+	ErrUnsupportedEnumType = errors.New("unsupported enum value type")
 )
