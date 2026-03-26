@@ -27,6 +27,8 @@ const (
 	TypeFloat64
 
 	TypeList
+
+	TypeTimestamp
 )
 
 // Type represents the type of a value. For list types, Elem holds the element type.
@@ -52,6 +54,8 @@ var typeKindToString = map[TypeKind]string{
 	TypeFloat64: "float64",
 
 	TypeList: "list",
+
+	TypeTimestamp: "timestamp",
 }
 
 // String returns a string representation of the Type. For basic types, it returns the
@@ -61,7 +65,8 @@ var typeKindToString = map[TypeKind]string{
 func (t *Type) String() string {
 	var sb strings.Builder
 
-	if t.Kind == TypeList {
+	switch t.Kind {
+	case TypeList:
 		sb.WriteString(typeKindToString[TypeList])
 		sb.WriteString("[")
 		if t.Elem != nil {
@@ -71,7 +76,7 @@ func (t *Type) String() string {
 		}
 		sb.WriteString("]")
 
-	} else {
+	default:
 		if s, ok := typeKindToString[t.Kind]; ok {
 			sb.WriteString(s)
 		} else {
@@ -99,6 +104,8 @@ var stringToTypeKind = map[string]TypeKind{
 	"float64": TypeFloat64,
 
 	"list": TypeList,
+
+	"timestamp": TypeTimestamp,
 }
 
 // ParseType takes a string representation of a type and converts it into a Type struct.
@@ -107,8 +114,8 @@ var stringToTypeKind = map[string]TypeKind{
 func ParseType(s string) (*Type, error) {
 	s = strings.TrimSpace(s)
 
-	if strings.HasPrefix(s, "list[") && strings.HasSuffix(s, "]") {
-		elemTypeStr := strings.TrimSuffix(strings.TrimPrefix(s, "list["), "]")
+	if strings.HasPrefix(s, typeKindToString[TypeList]+"[") && strings.HasSuffix(s, "]") {
+		elemTypeStr := strings.TrimSuffix(strings.TrimPrefix(s, typeKindToString[TypeList]+"["), "]")
 		elemType, err := ParseType(elemTypeStr)
 		if err != nil {
 			return nil, fmt.Errorf("type: %q: %w", s, err)
