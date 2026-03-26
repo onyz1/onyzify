@@ -7,11 +7,11 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// YAMLOutput is the output target type accepted by the YAML helpers.
-type YAMLOutput any
+// Output is the output target type accepted by the YAML helpers.
+type Output any
 
 // Load parses the YAML data and populates the provided output structure with the corresponding values.
-func Load(data []byte, out YAMLOutput) error {
+func Load(data []byte, out Output) error {
 	if err := yaml.Unmarshal(data, out); err != nil {
 		return fmt.Errorf("unmarshal yaml: %w", err)
 	}
@@ -21,7 +21,7 @@ func Load(data []byte, out YAMLOutput) error {
 
 // LoadFile reads a YAML file from the specified path and populates
 // the provided output structure with the corresponding values.
-func LoadFile(path string, out YAMLOutput) error {
+func LoadFile(path string, out Output) error {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return fmt.Errorf("read yaml file: %w", err)
@@ -30,13 +30,13 @@ func LoadFile(path string, out YAMLOutput) error {
 	return Load(data, out)
 }
 
-// YAMLInputs represents a collection of YAML inputs,
+// Inputs represents a collection of YAML inputs,
 // where each key is a field name and the corresponding value
 // is the value to be serialized in YAML format.
-type YAMLInputs map[string]any
+type Inputs map[string]any
 
-// Save converts the YAMLInputs into a YAML byte slice.
-func Save(input YAMLInputs) ([]byte, error) {
+// Save converts the Inputs into a YAML byte slice.
+func Save(input Inputs) ([]byte, error) {
 	data, err := yaml.Marshal(input)
 	if err != nil {
 		return nil, fmt.Errorf("marshal yaml: %w", err)
@@ -45,9 +45,9 @@ func Save(input YAMLInputs) ([]byte, error) {
 	return data, nil
 }
 
-// SaveFile takes a file path and YAMLInputs, converts the inputs into YAML format,
+// SaveFile takes a file path and Inputs, converts the inputs into YAML format,
 // and writes the resulting data to the specified file.
-func SaveFile(path string, input YAMLInputs) error {
+func SaveFile(path string, input Inputs) error {
 	data, err := Save(input)
 	if err != nil {
 		return fmt.Errorf("save yaml: %w", err)
