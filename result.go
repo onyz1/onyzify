@@ -3,6 +3,7 @@ package onyzify
 import (
 	"fmt"
 
+	"github.com/onyz1/onyzify/internal/env"
 	"github.com/onyz1/onyzify/internal/yaml"
 )
 
@@ -38,4 +39,20 @@ func (r *Result) SaveYAML(path string) error {
 	}
 	return nil
 
+}
+
+// ENV converts the map representation of the parsed command-line inputs into a byte slice formatted as environment variable definitions.
+// Each key in the inputs map is transformed into an environment variable name (uppercase with spaces replaced by underscores),
+// and the corresponding value is set as the value of that environment variable.
+func (r *Result) ENV() []byte {
+	return []byte(env.Build(r.inputs))
+}
+
+// SaveENV saves the environment variable definitions generated from the parsed command-line inputs to a file at the specified path.
+// If there is an error during the file saving process, it returns an error with a descriptive message.
+func (r *Result) SaveENV(path string) error {
+	if err := env.BuildFile(r.inputs, path); err != nil {
+		return fmt.Errorf("save env file: %w", err)
+	}
+	return nil
 }
