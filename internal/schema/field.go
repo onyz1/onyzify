@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"slices"
+	"time"
 
 	"github.com/onyz1/infonyz"
 	"github.com/onyz1/onyzify/internal/types"
@@ -71,6 +72,9 @@ func (f *Field) UnmarshalYAML(value *yaml.Node) error {
 			}
 			f.Default = string(out)
 
+		case time.Time:
+			f.Default = v.Format(time.RFC3339)
+
 		default:
 			return fmt.Errorf("type: %T: %w", alias.Default, ErrUnsupportedDefaultType)
 		}
@@ -88,6 +92,9 @@ func (f *Field) UnmarshalYAML(value *yaml.Node) error {
 					return fmt.Errorf("marshal enum value: %w", err)
 				}
 				f.Enum = append(f.Enum, string(out))
+
+			case time.Time:
+				f.Enum = append(f.Enum, v.Format(time.RFC3339))
 
 			default:
 				return fmt.Errorf("type: %T: %w", item, ErrUnsupportedEnumType)
