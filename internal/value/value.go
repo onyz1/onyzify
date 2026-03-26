@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/onyz1/onyzify/internal/types"
 )
@@ -35,6 +36,9 @@ type Value struct {
 
 	// Float64 holds the float64 value when Type is TypeFloat64.
 	Float64 float64
+
+	// Timestamp holds the time value when Type is TypeTimestamp.
+	Timestamp time.Time
 
 	// List holds a slice of Value when Type is a list type (e.g., []int, []string, etc.).
 	List []*Value
@@ -68,6 +72,9 @@ func (v *Value) Stringify() string {
 
 	case types.TypeFloat64:
 		return strconv.FormatFloat(v.Float64, 'f', -1, 64)
+
+	case types.TypeTimestamp:
+		return v.Timestamp.Format(time.RFC3339)
 
 	case types.TypeList:
 		var sb strings.Builder
@@ -122,6 +129,9 @@ func (v *Value) Interface() any {
 		}
 		return list
 
+	case types.TypeTimestamp:
+		return v.Timestamp
+
 	default:
 		return nil
 	}
@@ -160,6 +170,9 @@ func (v *Value) Equal(other Value) bool {
 
 	case types.TypeFloat64:
 		return v.Float64 == other.Float64
+
+	case types.TypeTimestamp:
+		return v.Timestamp.Equal(other.Timestamp)
 
 	case types.TypeList:
 		if len(v.List) != len(other.List) {
@@ -206,6 +219,9 @@ func (v *Value) IsZero() bool {
 
 	case types.TypeFloat64:
 		return v.Float64 == 0.0
+
+	case types.TypeTimestamp:
+		return v.Timestamp.IsZero()
 
 	case types.TypeList:
 		if len(v.List) == 0 {
@@ -291,6 +307,17 @@ func (v *Value) UnmarshalJSON(data []byte) error {
 			return nil
 		}
 		return fmt.Errorf("expected float64, got %T", raw)
+
+	case types.TypeTimestamp:
+		if str, ok := raw.(string); ok {
+			t, err := time.Parse(time.RFC3339, str)
+			if err != nil {
+				return fmt.Errorf("parse timestamp: %w", err)
+			}
+			v.Timestamp = t
+			return nil
+		}
+		return fmt.Errorf("expected timestamp string, got %T", raw)
 
 	case types.TypeList:
 		if arr, ok := raw.([]any); ok {
@@ -384,6 +411,14 @@ func ParseValue(t types.Type, input string) (*Value, error) {
 		}
 
 		v.Float64 = parsed
+
+	case types.TypeTimestamp:
+		parsed, err := time.Parse(time.RFC3339, input)
+		if err != nil {
+			return nil, fmt.Errorf("parse timestamp %q: %w", input, err)
+		}
+
+		v.Timestamp = parsed
 
 	case types.TypeList:
 		if v.Type.Elem == nil {
