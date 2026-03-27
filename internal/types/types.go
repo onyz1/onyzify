@@ -121,10 +121,9 @@ func ParseType(s string) (*Type, error) {
 			return nil, fmt.Errorf("type: %q: %w", s, err)
 		}
 		return &Type{Kind: TypeList, Elem: elemType}, nil
-	}
-
-	if tk, ok := stringToTypeKind[s]; ok {
+	} else if tk, ok := stringToTypeKind[s]; ok {
 		return &Type{Kind: tk}, nil
+
 	}
 
 	return nil, fmt.Errorf("type: %q: %w", s, ErrUnknownType)
